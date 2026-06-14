@@ -1,0 +1,1 @@
+{"version":3,"file":"screen.d.ts","sourceRoot":"","sources":["../../src/tui/screen.ts"],"names":[],"mappings":"AAEA,MAAM,CAAC,OAAO,OAAO,MAAM;IACzB,KAAK,EAAE,MAAM,CAAC;IACd,MAAM,EAAE,MAAM,CAAC;;IAaf,KAAK,IAAI,IAAI;IAKb,QAAQ,CAAC,GAAG,EAAE,MAAM,EAAE,GAAG,EAAE,MAAM,GAAG,IAAI;IAIxC,KAAK,CAAC,IAAI,EAAE,MAAM,GAAG,IAAI;CAG1B"}

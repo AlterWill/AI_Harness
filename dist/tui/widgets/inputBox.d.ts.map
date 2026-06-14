@@ -1,0 +1,1 @@
+{"version":3,"file":"inputBox.d.ts","sourceRoot":"","sources":["../../../src/tui/widgets/inputBox.ts"],"names":[],"mappings":"AAAA,OAAO,GAAG,MAAM,UAAU,CAAC;AAI3B,MAAM,CAAC,OAAO,OAAO,QAAS,SAAQ,GAAG;gBAC3B,IAAI,EAAE,MAAM,EAAE,KAAK,GAAE,QAAQ,GAAG,MAAe;CAK5D;AAED,wBAAgB,cAAc,CAC5B,YAAY,EAAE,MAAM,EACpB,aAAa,EAAE,MAAM,EACrB,wBAAwB,EAAE,MAAM,EAChC,uBAAuB,EAAE,MAAM,GAC9B,MAAM,CAWR"}
