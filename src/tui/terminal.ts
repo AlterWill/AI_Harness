@@ -2,6 +2,7 @@ import InputBox from "./widgets/inputBox.js";
 import Box from "./widgets/box.js";
 import Screen from "./screen.js";
 import splitByWords from "../utils/splitByWords.js";
+import renderMarkdown from "../utils/markdown.js";
 
 export default class Terminal {
   screen: Screen;
@@ -10,6 +11,7 @@ export default class Terminal {
   cursorY: number;
   headerText: string;
   inputBoxText: string;
+  conversationHistoryText: string
   inputBoxTextXAxisMargin: number;
   inputBoxTextXAxisPadding: number;
   borderWidth: number;
@@ -23,6 +25,7 @@ export default class Terminal {
     this.buffer = ["", "", "", "Press Ctrl+C again to exit...\n"];
     this.inputBoxText = "";
     this.headerText = ""
+    this.conversationHistoryText = ""
     this.inputBoxTextXAxisMargin = 0;
     this.inputBoxTextXAxisPadding = 1;
     this.borderWidth = 1;
@@ -40,7 +43,7 @@ export default class Terminal {
 
   header(a: string): void {
     const headerBox = new Box(a, "center");
-    headerBox.addDimeansions(this.screen.width, 3);
+    headerBox.addDimensions(this.screen.width, 3);
     headerBox.setBorder("heavy");
     this.buffer[0] = headerBox.render().join("\n");
   }
@@ -51,24 +54,37 @@ export default class Terminal {
 
     // Render header
     const headerContent = this.buffer[0] ?? "";
-    console.log(headerContent);
-    this.cursorY += this.headingHeight + 1;
+    process.stdout.write(headerContent);
+    this.cursorY += this.headingHeight;
 
     // Render conversation history
     const historyContent = this.buffer[1] ?? "";
-    console.log(historyContent);
-    const historyTextLines = splitByWords(
-      historyContent,
-      this.screen.width - this.inputBoxTextXAxisMargin - this.inputBoxTextXAxisPadding - 2
-    );
-    this.cursorY += historyTextLines.length + 1;
+    const renderedHistory = renderMarkdown(historyContent);
+    const historyLines = renderedHistory.split("\n");
+
+    // Calculate dynamic available height to prevent scrolling overflow
+    const inputBox = this.createInputBox();
+    const inputBoxHeight = inputBox.height;
+    const extraSpaceForExitMessage = this.displayExitMessageForCtrlC ? 2 : 0;
+    const maxHistoryHeight = this.screen.height - this.headingHeight - inputBoxHeight - extraSpaceForExitMessage - 2;
+
+    // Slice only the most recent lines that fit on screen
+    const linesToPrint = maxHistoryHeight > 0 && historyLines.length > maxHistoryHeight
+      ? historyLines.slice(-maxHistoryHeight)
+      : historyLines;
+
+    const printableHistory = linesToPrint.join("\n");
+    process.stdout.write(printableHistory + "\n");
+
+    // Adjust cursor Y by exact lines output
+    const linesCount = linesToPrint[linesToPrint.length - 1] === "" ? linesToPrint.length - 1 : linesToPrint.length;
+    this.cursorY += linesCount + 1;
 
     // Render input box
     const inputBoxContent = this.buffer[2] ?? "";
-    console.log(inputBoxContent);
+    process.stdout.write(inputBoxContent);
 
     // Calculate cursor position inside input box
-    const inputBox = this.createInputBox();
     const cursorOffset = inputBox.getCursorOffset();
     this.cursorY += cursorOffset.y - 1;
     this.cursorX = this.inputBoxTextXAxisMargin + cursorOffset.x;
@@ -91,7 +107,7 @@ export default class Terminal {
     const boxWidth = this.screen.width - (2 * this.inputBoxTextXAxisMargin);
 
     const inputBox = new InputBox(this.inputBoxText, "left");
-    inputBox.addDimeansions(boxWidth, boxHeight);
+    inputBox.addDimensions(boxWidth, boxHeight);
     inputBox.addPadding(this.inputBoxTextXAxisPadding, 0);
     return inputBox;
   }

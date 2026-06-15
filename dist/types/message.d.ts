@@ -1,5 +1,5 @@
 export type message = {
-    role: "user" | "model";
+    role: "system" | "user" | "model";
     text: string;
 };
 //# sourceMappingURL=message.d.ts.map

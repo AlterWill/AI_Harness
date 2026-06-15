@@ -9,7 +9,7 @@ export default class Box {
     Ypadding: number;
     borderCharacters: borderStyle;
     constructor(text: string, align: "center" | "left");
-    addDimeansions(width: number, height: number): void;
+    addDimensions(width: number, height: number): void;
     addPadding(padding: BoxPadding | number, maybeYpadding?: number): void;
     setBorder(style: borderStyle | keyof typeof BORDER_PRESETS): void;
     setBorderCharacters(...chars: string[]): void;

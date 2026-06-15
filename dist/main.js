@@ -1,25 +1,18 @@
 import dotenv from "dotenv";
-import axios from "axios";
 dotenv.config();
-import Terminal from "./terminal.js";
+import Terminal from "./tui/terminal.js";
 import terminalRawMode from "./utils/terminalRawMode.js";
 import setupKeyboard from "./input/keyboard.js";
 import { ANSI } from "./utils/escapeSequences.js";
-const minTUIScreenHeight = 20;
-const minTUIScreenWidth = 20;
+import { askGemini } from "./agent/aiModels/gemini.js";
+import axios from "axios";
 console.clear();
 terminalRawMode();
+const minTUIScreenHeight = parseInt(process.env.minTUIScreenHeight ?? "20");
+const minTUIScreenWidth = parseInt(process.env.minTUIScreenWidth ?? "40");
+const geminiModel = (process.env.geminiModel || "2.5-flash");
 const history = [];
 const main = new Terminal();
-async function sentPrompt(prompt) {
-    let result = await axios.post(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
-        contents: history.map((m) => ({
-            role: m.role,
-            parts: [{ text: m.text }],
-        })),
-    });
-    return result.data.candidates?.[0]?.content?.parts?.[0]?.text;
-}
 setupKeyboard({
     onText(text) {
         main.inputBoxText += text;
@@ -54,7 +47,43 @@ setupKeyboard({
         process.stdin.setRawMode(false);
         process.exit();
     },
-    onEnter() {
+    async onEnter() {
+        let text = main.inputBoxText.trim();
+        if (!text)
+            return;
+        main.inputBoxText = "";
+        let prompt = {
+            role: "user",
+            text: text
+        };
+        history.push(prompt);
+        main.conversationHistoryText = history.map(msg => `${msg.role === "user" ? "You\n" : "AI\n"}${msg.text}`).join(' ');
+        main.buffer[1] = main.conversationHistoryText;
+        console.clear();
+        main.inputBox();
+        main.display();
+        try {
+            const response = await askGemini(geminiModel, history);
+            history.push({ role: "model", text: response });
+        }
+        catch (err) {
+            if (axios.isAxiosError(err)) {
+                if (err.response?.status === 429) {
+                    history.push({ role: "model", text: "You have hit the rate limit" });
+                }
+                else if (err.response?.status === 404) {
+                    history.push({ role: "model", text: "You have invalid model or key" });
+                }
+            }
+            else {
+                history.push({ role: "model", text: err });
+            }
+        }
+        main.conversationHistoryText = history.map(msg => `${msg.role === "user" ? "You\n" : "AI\n"}${msg.text}`).join('\n');
+        main.buffer[1] = main.conversationHistoryText;
+        console.clear();
+        main.inputBox();
+        main.display();
     }
 });
 process.stdout.on("resize", () => {
@@ -63,10 +92,10 @@ process.stdout.on("resize", () => {
     if (main.screen.height < minTUIScreenHeight || main.screen.width < minTUIScreenWidth) {
         console.clear();
         console.log(errorMessage);
-        process.stdin.write(ANSI.CURSOR_HIDE);
+        process.stdout.write(ANSI.CURSOR_HIDE);
     }
     else {
-        process.stdin.write(ANSI.CURSOR_SHOW);
+        process.stdout.write(ANSI.CURSOR_SHOW);
         main.header("WELCOME TO AI CLI");
         main.inputBox();
         main.display();
@@ -77,10 +106,10 @@ let errorMessage = "This TUI needs " + minTUIScreenHeight + " height and " + min
 if (main.screen.height < minTUIScreenHeight || main.screen.width < minTUIScreenWidth) {
     console.clear();
     console.log(errorMessage);
-    process.stdin.write(ANSI.CURSOR_HIDE);
+    process.stdout.write(ANSI.CURSOR_HIDE);
 }
 else {
-    process.stdin.write(ANSI.CURSOR_SHOW);
+    process.stdout.write(ANSI.CURSOR_SHOW);
     main.header("WELCOME TO AI CLI");
     main.inputBox();
     main.display();

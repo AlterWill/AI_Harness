@@ -21,7 +21,7 @@ export function renderInputBox(
   const boxWidth = inputBoxWidth + 2 * inputBoxTextXAxisPadding + 2;
 
   const inputBox = new InputBox(inputBoxText, "left");
-  inputBox.addDimeansions(boxWidth, boxHeight);
+  inputBox.addDimensions(boxWidth, boxHeight);
   inputBox.addPadding(inputBoxTextXAxisPadding);
 
   const margin = " ".repeat(inputBoxTextXAxisMargin);

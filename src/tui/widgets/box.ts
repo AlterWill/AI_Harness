@@ -21,7 +21,7 @@ export default class Box {
     this.borderCharacters = BORDER_PRESETS.heavy
   }
 
-  addDimeansions(width: number, height: number) {
+  addDimensions(width: number, height: number) {
     this.width = width
     this.height = height
   }

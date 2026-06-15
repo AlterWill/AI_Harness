@@ -17,7 +17,7 @@ export default class Box {
         this.Ypadding = 0;
         this.borderCharacters = BORDER_PRESETS.heavy;
     }
-    addDimeansions(width, height) {
+    addDimensions(width, height) {
         this.width = width;
         this.height = height;
     }
