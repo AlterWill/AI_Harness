@@ -9,8 +9,9 @@ import terminalRawMode from "./utils/terminalRawMode.js";
 import setupKeyboard from "./input/keyboard.js";
 import { ANSI } from "./utils/escapeSequences.js";
 import type { model } from "./agent/aiModels/gemini.js";
-import { askGemini } from "./agent/aiModels/gemini.js";
 import Spinner from "./utils/spinner.js";
+import agentLoop from "./agent/agent.js";
+import { tools } from "./tools/index.js";
 
 console.clear();
 terminalRawMode();
@@ -97,9 +98,15 @@ setupKeyboard({
 
     history.push(prompt)
 
-    main.conversationHistoryText = history.map(
-      msg => `${msg.role === "user" ? "\nYou\n\n" : "\nAI\n\n"}${msg.text}`
-    ).join('\n')
+    main.conversationHistoryText = history
+      .map(msg => {
+        const text = msg.text || (msg.parts?.find(p => typeof p === 'object' && 'text' in p) as any)?.text;
+        if (!text) return null;
+        return `${msg.role === "user" ? "\nYou\n\n" : "\nAI\n\n"}${text}`;
+      })
+      .filter(Boolean)
+      .join('\n')
+
     main.buffer[1] = main.conversationHistoryText
 
     console.clear()
@@ -107,8 +114,9 @@ setupKeyboard({
     main.display()
 
     try {
-      const response = await askGemini(geminiModel, history)
-      history.push({ role: "model", text: response })
+      await agentLoop({
+        model: geminiModel
+      }, history, tools)
     } catch (err) {
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 429) {
@@ -126,9 +134,14 @@ setupKeyboard({
       main.buffer[4] = ""
     }
 
-    main.conversationHistoryText = history.map(
-      msg => `${msg.role === "user" ? "\nYou\n\n" : "\nAI\n\n"}${msg.text}`
-    ).join('\n')
+    main.conversationHistoryText = history
+      .map(msg => {
+        const text = msg.text || (msg.parts?.find(p => typeof p === 'object' && 'text' in p) as any)?.text;
+        if (!text) return null;
+        return `${msg.role === "user" ? "\nYou\n\n" : "\nAI\n\n"}${text}`;
+      })
+      .filter(Boolean)
+      .join('\n')
     main.buffer[1] = main.conversationHistoryText
 
     console.clear()

@@ -53,6 +53,7 @@ export default class Terminal {
 
   display(): void {
     let frame = ""
+    frame += ANSI.CLEAR_SCREEN;
     frame += ANSI.TOP_LEFT_POSISTION;
     // 1. Position and render header
     const headerContent = this.buffer[0] ?? "";
