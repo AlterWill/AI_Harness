@@ -3,6 +3,7 @@ import Box from "./widgets/box.js";
 import Screen from "./screen.js";
 import splitByWords from "../utils/splitByWords.js";
 import renderMarkdown from "../utils/markdown.js";
+import { ANSI } from "../utils/escapeSequences.js";
 
 export default class Terminal {
   screen: Screen;
@@ -16,13 +17,14 @@ export default class Terminal {
   inputBoxTextXAxisPadding: number;
   borderWidth: number;
   headingHeight: number;
+  scrollOffset: number
   displayExitMessageForCtrlC: boolean;
 
   constructor() {
     this.screen = new Screen();
     this.cursorX = 1;
     this.cursorY = 1;
-    this.buffer = ["", "", "", "Press Ctrl+C again to exit...\n"];
+    this.buffer = ["", "", "", "Press Ctrl+C again to exit...\n", ""];
     this.inputBoxText = "";
     this.headerText = ""
     this.conversationHistoryText = ""
@@ -31,6 +33,7 @@ export default class Terminal {
     this.borderWidth = 1;
     this.headingHeight = 3;
     this.displayExitMessageForCtrlC = false;
+    this.scrollOffset = 0
   }
 
   getInputBoxWidth(): number {
@@ -49,56 +52,68 @@ export default class Terminal {
   }
 
   display(): void {
-    this.cursorY = 1;
-    this.cursorX = 1;
-
-    // Render header
+    let frame = ""
+    frame += ANSI.TOP_LEFT_POSISTION;
+    // 1. Position and render header
     const headerContent = this.buffer[0] ?? "";
-    process.stdout.write(headerContent);
-    this.cursorY += this.headingHeight;
+    frame += headerContent
 
-    // Render conversation history
+    // 2. Position and render conversation history
     const historyContent = this.buffer[1] ?? "";
-    const renderedHistory = renderMarkdown(historyContent);
-    const historyLines = renderedHistory.split("\n");
+    const renderedHistory = renderMarkdown(historyContent, this.screen.width).trimEnd();
+    const historyLines = renderedHistory === "" ? [] : renderedHistory.split("\n");
 
     // Calculate dynamic available height to prevent scrolling overflow
     const inputBox = this.createInputBox();
     const inputBoxHeight = inputBox.height;
     const extraSpaceForExitMessage = this.displayExitMessageForCtrlC ? 2 : 0;
-    const maxHistoryHeight = this.screen.height - this.headingHeight - inputBoxHeight - extraSpaceForExitMessage - 2;
+    const extraSpaceForSpinner = this.buffer[4] !== "" ? (historyLines.length > 0 ? 2 : 1) : 0;
+    const maxHistoryHeight = Math.max(0, this.screen.height - this.headingHeight - inputBoxHeight - extraSpaceForExitMessage - extraSpaceForSpinner - 2);
 
-    // Slice only the most recent lines that fit on screen
-    const linesToPrint = maxHistoryHeight > 0 && historyLines.length > maxHistoryHeight
-      ? historyLines.slice(-maxHistoryHeight)
-      : historyLines;
+    // Scroll handling
+    const maxScroll = Math.max(0, historyLines.length - maxHistoryHeight)
+    this.scrollOffset = Math.min(Math.max(0, this.scrollOffset), maxScroll)
+    const startIndex = Math.max(0, historyLines.length - maxHistoryHeight - this.scrollOffset)
+    const endIndex = Math.max(0, historyLines.length - this.scrollOffset)
+
+    // Slice only the lines that fit on screen
+    const linesToPrint = historyLines.slice(startIndex, endIndex)
 
     const printableHistory = linesToPrint.join("\n");
-    process.stdout.write(printableHistory + "\n");
 
-    // Adjust cursor Y by exact lines output
-    const linesCount = linesToPrint[linesToPrint.length - 1] === "" ? linesToPrint.length - 1 : linesToPrint.length;
-    this.cursorY += linesCount + 1;
-
-    // Render input box
-    const inputBoxContent = this.buffer[2] ?? "";
-    process.stdout.write(inputBoxContent);
-
-    // Calculate cursor position inside input box
-    const cursorOffset = inputBox.getCursorOffset();
-    this.cursorY += cursorOffset.y - 1;
-    this.cursorX = this.inputBoxTextXAxisMargin + cursorOffset.x;
-
-    // Render exit message if Ctrl+C was pressed once
-    if (this.displayExitMessageForCtrlC) {
-      const exitMsg = this.buffer[3] ?? "Press Ctrl+C again to exit...\n";
-      this.cursorY += 2;
-      this.cursorX = exitMsg.length;
-      console.log(exitMsg);
+    // Draw history starting at Row 4
+    frame += ANSI.cursorTo(4, 1)
+    if (printableHistory !== "") {
+      frame += printableHistory
     }
 
-    // Set cursor position
-    this.screen.cursorTo(this.cursorY, this.cursorX);
+    if (this.buffer[4] !== "") {
+      frame += (historyLines.length > 0 ? "\n\n" : "") + this.buffer[4] + "\n";
+    }
+
+    // 3. Position and render input box
+    const linesCount = linesToPrint.length;
+    const spinnerLineCount = this.buffer[4] !== "" ? (historyLines.length > 0 ? 2 : 1) : 0;
+    const inputBoxRow = 4 + linesCount + spinnerLineCount;
+    frame += ANSI.cursorTo(inputBoxRow, 1)
+
+    const inputBoxContent = this.buffer[2] ?? "";
+    frame += inputBoxContent + ANSI.BOTTOM_RIGHT_POSISTION
+
+    // 4. Calculate cursor position inside input box
+    const cursorOffset = inputBox.getCursorOffset();
+    this.cursorY = inputBoxRow + cursorOffset.y;
+    this.cursorX = this.inputBoxTextXAxisMargin + cursorOffset.x;
+
+    // 5. Position and render exit message if Ctrl+C was pressed once
+    if (this.displayExitMessageForCtrlC) {
+      const exitMsg = this.buffer[3] ?? "Press Ctrl+C again to exit...\n";
+      frame += ANSI.cursorTo(inputBoxRow + inputBoxHeight, 1) + exitMsg
+    }
+
+    // 6. Set cursor position
+    frame += ANSI.cursorTo(this.cursorY, this.cursorX)
+    process.stdout.write(frame)
   }
 
   createInputBox(): InputBox {

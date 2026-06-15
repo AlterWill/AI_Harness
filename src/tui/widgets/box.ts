@@ -149,14 +149,27 @@ export default class Box {
             this.borderCharacters.vertical
           )
         } else {
-          result.push(
-            this.borderCharacters.vertical +
-            " ".repeat(this.Xpadding) +
-            textLine +
-            " ".repeat(this.width - textLine.length - (2 * this.Xpadding) - (2 * this.borderCharacters.vertical.length)) +
-            " ".repeat(this.Xpadding) +
-            this.borderCharacters.vertical
-          )
+          if (this.align == "left") {
+            result.push(
+              this.borderCharacters.vertical +
+              " ".repeat(this.Xpadding) +
+              textLine +
+              " ".repeat(this.width - textLine.length - (2 * this.Xpadding) - (2 * this.borderCharacters.vertical.length)) +
+              " ".repeat(this.Xpadding) +
+              this.borderCharacters.vertical
+            )
+          } else if (this.align == "center") {
+            result.push(
+              this.borderCharacters.vertical +
+              " ".repeat(this.Xpadding) +
+              " ".repeat(Math.floor((this.width - textLine.length - (2 * this.Xpadding) - (2 * this.borderCharacters.vertical.length)) / 2)) +
+              textLine +
+              " ".repeat(Math.ceil((this.width - textLine.length - (2 * this.Xpadding) - (2 * this.borderCharacters.vertical.length)) / 2)) +
+              " ".repeat(this.Xpadding) +
+              this.borderCharacters.vertical
+            )
+
+          }
           textCounter++;
         }
       }

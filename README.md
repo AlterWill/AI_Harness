@@ -8,8 +8,8 @@
 * [x] Detect terminal width and height
 * [x] Handle Ctrl+C gracefully
 * [x] Create basic terminal class
-* [ ] Create central application state
-* [ ] Handle terminal resize events
+* [x] Create central application state
+* [x] Handle terminal resize events
 
 ### Rendering System
 
@@ -18,36 +18,36 @@
 * [x] Create box rendering system
 * [x] Create border style system
 * [x] Create padding system
-* [ ] Create message history section
-* [ ] Render entire screen from state
-* [ ] Clear and redraw screen correctly
-* [ ] Prevent visual flickering
-* [ ] Create screen buffer
+* [x] Create message history section
+* [x] Render entire screen from state
+* [x] Clear and redraw screen correctly
+* [x] Prevent visual flickering
+* [x] Create screen buffer
 
 ### Input System
 
 * [x] Capture keyboard input
 * [x] Display typed characters
 * [x] Handle Backspace
-* [ ] Handle Enter
-* [ ] Handle Arrow Keys
+* [x] Handle Enter
+* [x] Handle Arrow Keys
 * [ ] Command history
 * [ ] Multi-line editing
 
 ### Text Processing
 
 * [x] Split text by length
-* [ ] Split text by words
-* [ ] Text alignment (center/left)
-* [ ] Text wrapping for chat messages
-* [ ] Markdown-aware wrapping
+* [x] Split text by words
+* [x] Text alignment (center/left)
+* [x] Text wrapping for chat messages
+* [x] Markdown-aware wrapping
 
 ### Message History
 
-* [ ] Store user messages
-* [ ] Display message history
-* [ ] Support scrolling
-* [ ] Keep input box fixed at bottom
+* [x] Store user messages
+* [x] Display message history
+* [x] Support scrolling
+* [x] Keep input box fixed at bottom
 
 ---
 
@@ -55,20 +55,20 @@
 
 ### API Layer
 
-* [ ] Move Gemini code into its own file
-* [ ] Create Gemini client class
-* [ ] Send user prompts
-* [ ] Receive model responses
-* [ ] Handle API errors
+* [x] Move Gemini code into its own file
+* [x] Create Gemini client/API function
+* [x] Send user prompts
+* [x] Receive model responses
+* [x] Handle API errors
 * [ ] Display loading state
 
 ### Chat Flow
 
-* [ ] Enter submits message
-* [ ] User message appears instantly
-* [ ] Gemini response appears after request
-* [ ] Save conversation history
-* [ ] Send previous messages as context
+* [x] Enter submits message
+* [x] User message appears instantly
+* [x] Gemini response appears after request
+* [x] Save conversation history
+* [x] Send previous messages as context
 
 ---
 
@@ -183,34 +183,13 @@
 
 # Current Goal
 
-Focus only on:
+Focus on **AI capabilities, structured outputs, and tool integration**:
 
-* [ ] Enter key
-* [ ] Message history
-* [ ] Chat rendering
-* [ ] Screen buffer
-* [ ] Word wrapping
-* [ ] Proper rendering loop
-
-Everything else can wait.
-
-A stable chat UI is the foundation for the harness.
-
-src/
-├── main.ts
-├── tui/
-│   ├── screen.ts
-│   └── widgets/
-│       ├── box.ts
-│       ├── inputBox.ts
-│       └── textArea.ts
-├── input/
-│   └── keyboard.ts
-├── chat/
-│   └── history.ts
-└── utils/
-    ├── splitByLength.ts
-    └── splitByWords.ts
+* [ ] **Enforce Structured JSON Outputs**: Add schema validation support to [askGemini](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/agent/aiModels/gemini.ts#L10) using Gemini's native `responseSchema` and `responseMimeType`.
+* [ ] **Define the Tool Interface & Registry**: Create a system for defining local tools (e.g., `readFile`, `writeFile`, `executeCommand`) that Gemini can invoke.
+* [ ] **Register Tools with Gemini**: Update [askGemini](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/agent/aiModels/gemini.ts#L10) to declare tools using native function calling (`functionDeclarations`).
+* [ ] **Execute Agent Loop (Planner-Executor-Critic)**: Create the core orchestrator loop (e.g., in `src/agent/loop.ts`) to manage goals, break them down into tasks, run them, and verify success.
+* [ ] **Add Human-in-the-Loop Safety Gates**: Implement interactive approval prompts (`y/n`) in the TUI input loop before the agent runs modifying tools or terminal commands.
 
 ---
 
@@ -240,8 +219,9 @@ src/
 
 ## What to Do Next
 
-Now that the box widgets and borders are fully type-safe and support presets, here are the next priority steps according to the roadmap:
-1. **Handle the Enter Key**: Implement the `onEnter()` callback in [keyboard.ts](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/input/keyboard.ts) so that user input can be submitted.
-2. **Message History rendering**: Save messages submitted by the user and render them inside a scrollable history box above the input box.
-3. **Terminal Resize Handling**: Dynamically recalculate box dimensions when the terminal dimensions change.
-4. **API Integration**: Link the compiled app to the Gemini API using the API key in `.env` to start receiving responses.
+Now that your TUI foundation and Gemini API integrations are complete and fully functional, here are the next priority steps to build the AI Harness:
+
+1. **Implement JSON Schema Support**: Add schema validation to the Gemini REST API calls in [gemini.ts](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/agent/aiModels/gemini.ts) so you can get guaranteed parseable JSON arrays for task lists.
+2. **Implement Local Tools**: Write helper functions for file operations and command execution in a new tools file, describing their arguments with JSON schemas.
+3. **Handle Function Call Actions**: Add a function execution handler in [main.ts](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/main.ts) that executes local code when Gemini returns a `functionCall` and feeds the result back to the model.
+4. **Coordinate the Agent Loop**: Wire the planner and tools together using a simple CLI agent loop that logs each step directly to the screen history.

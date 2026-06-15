@@ -7,6 +7,14 @@ export default function setupKeyboard(cb) {
                 cb.onEnter();
                 return;
             }
+            if (key.name === "up" && cb.onUp) {
+                cb.onUp();
+                return;
+            }
+            if (key.name === "down" && cb.onDown) {
+                cb.onDown();
+                return;
+            }
             if (key.name === "backspace") {
                 cb.onBackspace();
                 return;

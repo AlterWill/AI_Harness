@@ -5,6 +5,8 @@ export type keyboardCallBack = {
   onBackspace: () => void
   onCtrlC: () => void
   onEnter: () => void
+  onUp?: () => void
+  onDown?: () => void
 }
 
 export default function setupKeyboard(cb: keyboardCallBack) {
@@ -14,6 +16,14 @@ export default function setupKeyboard(cb: keyboardCallBack) {
     if (key) {
       if (key.name === "return" || key.name === "enter") {
         cb.onEnter()
+        return;
+      }
+      if (key.name === "up" && cb.onUp) {
+        cb.onUp()
+        return;
+      }
+      if (key.name === "down" && cb.onDown) {
+        cb.onDown()
         return;
       }
       if (key.name === "backspace") {

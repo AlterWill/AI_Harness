@@ -3,19 +3,18 @@ import { marked } from "marked";
 import TerminalRenderer from "marked-terminal";
 import chalk from "chalk"
 
-import Screen from "../tui/screen.js";
-
-export default function renderMarkdown(text: string): string {
-  const dimensions = new Screen();
-
+export default function renderMarkdown(text: string, width: number = process.stdout.columns || 80): string {
   marked.setOptions({
     renderer: new TerminalRenderer({
       showSectionPrefix: false,
       emoji: true,
       tab: 2,
-      width: dimensions.width,
+      width: width,
+      reflowText: true,
+      unescape: true,
       codespan: chalk.blue,
-      code: chalk.blue
+      code: chalk.blue,
+      blockquote: chalk.gray.italic,
     }),
   });
 

@@ -13,7 +13,7 @@ export default class Screen {
     }
     clear() {
         process.stdout.write(ANSI.CLEAR_SCREEN);
-        process.stdout.write(ANSI.CURSOR_HOME);
+        process.stdout.write(ANSI.TOP_LEFT_POSISTION);
     }
     cursorTo(row, col) {
         process.stdout.write(ANSI.cursorTo(row, col));

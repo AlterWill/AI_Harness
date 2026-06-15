@@ -1,6 +1,8 @@
 import dotenv from "dotenv";
+import axios from "axios";
 
 dotenv.config();
+
 import type { message } from "./types/message.js";
 import Terminal from "./tui/terminal.js";
 import terminalRawMode from "./utils/terminalRawMode.js";
@@ -8,28 +10,27 @@ import setupKeyboard from "./input/keyboard.js";
 import { ANSI } from "./utils/escapeSequences.js";
 import type { model } from "./agent/aiModels/gemini.js";
 import { askGemini } from "./agent/aiModels/gemini.js";
-import axios from "axios";
+import Spinner from "./utils/spinner.js";
 
 console.clear();
 terminalRawMode();
 
 const minTUIScreenHeight = parseInt(process.env.minTUIScreenHeight ?? "20")
 const minTUIScreenWidth = parseInt(process.env.minTUIScreenWidth ?? "40")
-const geminiModel: model = (process.env.geminiModel || "2.5-flash") as model
+const geminiModel: model = (process.env.geminiModel || "gemini-2.5-flash") as model
 
 const history: message[] = [];
 
 const main = new Terminal();
 
 setupKeyboard({
-  onText(text: string) {
+  onText(text: string): void {
     main.inputBoxText += text
-    console.clear()
     main.inputBox()
     main.display()
   },
 
-  onBackspace() {
+  onBackspace(): void {
     main.inputBoxText = main.inputBoxText.slice(0, -1)
     console.clear()
     main.inputBox()
@@ -37,7 +38,7 @@ setupKeyboard({
     return;
   },
 
-  onCtrlC() {
+  onCtrlC(): void {
     if (main.screen.width < minTUIScreenWidth || main.screen.height < minTUIScreenHeight) {
       process.stdin.setRawMode(false)
       process.exit()
@@ -46,7 +47,6 @@ setupKeyboard({
       main.displayExitMessageForCtrlC = true
       setTimeout(() => {
         main.displayExitMessageForCtrlC = false;
-        console.clear()
         main.display()
 
       }, 1500)
@@ -59,22 +59,47 @@ setupKeyboard({
     process.exit()
   },
 
+  onUp(): void {
+    main.scrollOffset++;
+    console.clear()
+    main.inputBox()
+    main.display()
+  },
+
+  onDown(): void {
+    main.scrollOffset = Math.max(0, main.scrollOffset - 1)
+    console.clear()
+    main.inputBox()
+    main.display()
+  },
+
   async onEnter(): Promise<void> {
+    main.scrollOffset = 0
     let text = main.inputBoxText.trim()
     if (!text) return;
 
     main.inputBoxText = ""
+    main.scrollOffset = 0
 
     let prompt: message = {
       role: "user",
       text: text
     }
 
+    const loadingAnimation = new Spinner()
+    loadingAnimation.onTick = (frame: string) => {
+      main.buffer[4] = `${frame} Thinking`
+      console.clear()
+      main.inputBox()
+      main.display()
+    }
+    loadingAnimation.start()
+
     history.push(prompt)
 
     main.conversationHistoryText = history.map(
-      msg => `${msg.role === "user" ? "You\n" : "AI\n"}${msg.text}`
-    ).join(' ')
+      msg => `${msg.role === "user" ? "\nYou\n\n" : "\nAI\n\n"}${msg.text}`
+    ).join('\n')
     main.buffer[1] = main.conversationHistoryText
 
     console.clear()
@@ -90,14 +115,19 @@ setupKeyboard({
           history.push({ role: "model", text: "You have hit the rate limit" })
         } else if (err.response?.status === 404) {
           history.push({ role: "model", text: "You have invalid model or key" })
+        } else {
+          history.push({ role: "model", text: `API Error: ${err.message}` })
         }
       } else {
-        history.push({ role: "model", text: err as string })
+        history.push({ role: "model", text: String(err) })
       }
+    } finally {
+      loadingAnimation.stop()
+      main.buffer[4] = ""
     }
 
     main.conversationHistoryText = history.map(
-      msg => `${msg.role === "user" ? "You\n" : "AI\n"}${msg.text}`
+      msg => `${msg.role === "user" ? "\nYou\n\n" : "\nAI\n\n"}${msg.text}`
     ).join('\n')
     main.buffer[1] = main.conversationHistoryText
 
@@ -107,9 +137,9 @@ setupKeyboard({
   }
 })
 
-process.stdout.on("resize", () => {
+function show(): void {
   console.clear()
-  let errorMessage = "This TUI needs " + minTUIScreenHeight + " height and " + minTUIScreenWidth + " width at least"
+  let errorMessage = "This TUI needs more than " + minTUIScreenHeight + " height and " + minTUIScreenWidth + " width at least"
   if (main.screen.height < minTUIScreenHeight || main.screen.width < minTUIScreenWidth) {
     console.clear()
     console.log(errorMessage)
@@ -120,18 +150,10 @@ process.stdout.on("resize", () => {
     main.inputBox()
     main.display()
   }
-});
-
-console.clear()
-let errorMessage = "This TUI needs " + minTUIScreenHeight + " height and " + minTUIScreenWidth + " width at least"
-if (main.screen.height < minTUIScreenHeight || main.screen.width < minTUIScreenWidth) {
-  console.clear()
-  console.log(errorMessage)
-  process.stdout.write(ANSI.CURSOR_HIDE)
-} else {
-  process.stdout.write(ANSI.CURSOR_SHOW)
-  main.header("WELCOME TO AI CLI");
-  main.inputBox()
-  main.display()
 }
 
+process.stdout.on("resize", () => {
+  show()
+});
+
+show()
