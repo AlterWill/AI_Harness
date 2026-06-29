@@ -32,8 +32,10 @@ export default async function agentLoop(model: aiModel, messages: message[], too
           {
             functionCall: {
               name: response.name,
-              args: response.args
-            }
+              args: response.args,
+              id: response.id
+            },
+            thoughtSignature: response.thoughtSignature
           }
         ]
       })
@@ -56,7 +58,8 @@ export default async function agentLoop(model: aiModel, messages: message[], too
           {
             functionResponse: {
               name: response.name,
-              response: { output: toolResult }
+              response: { output: toolResult },
+              id: response.id
             }
           }
         ]

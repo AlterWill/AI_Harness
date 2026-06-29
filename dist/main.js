@@ -30,6 +30,7 @@ setupKeyboard({
     },
     onCtrlC() {
         if (main.screen.width < minTUIScreenWidth || main.screen.height < minTUIScreenHeight) {
+            process.stdout.write(ANSI.CURSOR_SHOW);
             process.stdin.setRawMode(false);
             process.exit();
         }
@@ -44,6 +45,7 @@ setupKeyboard({
             main.display();
             return;
         }
+        process.stdout.write(ANSI.CURSOR_SHOW);
         process.stdin.setRawMode(false);
         process.exit();
     },

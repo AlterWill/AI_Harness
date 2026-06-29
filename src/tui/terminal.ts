@@ -28,7 +28,7 @@ export default class Terminal {
     this.inputBoxText = "";
     this.headerText = ""
     this.conversationHistoryText = ""
-    this.inputBoxTextXAxisMargin = 0;
+    this.inputBoxTextXAxisMargin = 1;
     this.inputBoxTextXAxisPadding = 1;
     this.borderWidth = 1;
     this.headingHeight = 3;
@@ -46,9 +46,9 @@ export default class Terminal {
 
   header(a: string): void {
     const headerBox = new Box(a, "center");
-    headerBox.addDimensions(this.screen.width, 3);
+    headerBox.addDimensions(this.screen.width - 2, 3);
     headerBox.setBorder("heavy");
-    this.buffer[0] = headerBox.render().join("\n");
+    this.buffer[0] = headerBox.render().map(line => " " + line).join("\n");
   }
 
   display(): void {
@@ -61,7 +61,7 @@ export default class Terminal {
 
     // 2. Position and render conversation history
     const historyContent = this.buffer[1] ?? "";
-    const renderedHistory = renderMarkdown(historyContent, this.screen.width).trimEnd();
+    const renderedHistory = renderMarkdown(historyContent, this.screen.width - 4).trimEnd();
     const historyLines = renderedHistory === "" ? [] : renderedHistory.split("\n");
 
     // Calculate dynamic available height to prevent scrolling overflow
@@ -131,6 +131,6 @@ export default class Terminal {
   inputBox(): void {
     const inputBox = this.createInputBox();
     const margin = " ".repeat(this.inputBoxTextXAxisMargin);
-    this.buffer[2] = inputBox.render().map(line => margin + line + margin).join("\n");
+    this.buffer[2] = inputBox.render().map(line => margin + line).join("\n");
   }
 }

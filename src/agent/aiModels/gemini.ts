@@ -30,7 +30,9 @@ export async function askGemini(model: model, prompt: message[]): Promise<string
 type askGeminiWithToolsReturnType = {
   type: "tool_call",
   name: string,
-  args: string
+  args: any,
+  id?: string,
+  thoughtSignature?: string
 } | {
   type: "text",
   text: string
@@ -69,7 +71,9 @@ export async function askGeminiWithTools(model: aiModel, prompt: message[], tool
     return {
       type: "tool_call",
       name: part.functionCall.name,
-      args: part.functionCall.args
+      args: part.functionCall.args,
+      id: part.functionCall.id,
+      thoughtSignature: part.thoughtSignature
     };
   }
 

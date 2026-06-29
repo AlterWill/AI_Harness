@@ -60,7 +60,7 @@
 * [x] Send user prompts
 * [x] Receive model responses
 * [x] Handle API errors
-* [ ] Display loading state
+* [x] Display loading state
 
 ### Chat Flow
 
@@ -97,7 +97,7 @@
 
 * [x] Box widget
 * [ ] Header widget
-* [ ] Input widget
+* [x] Input widget
 * [ ] Chat widget
 * [ ] Scroll view widget
 
@@ -142,16 +142,16 @@
 
 ### Tool Framework
 
-* [ ] Define tool interface
-* [ ] Register tools
-* [ ] Execute tool calls
-* [ ] Return tool results to model
+* [x] Define tool interface
+* [x] Register tools
+* [x] Execute tool calls
+* [x] Return tool results to model
 
 ### Basic Tools
 
-* [ ] File reader
+* [x] File reader
 * [ ] File writer
-* [ ] Directory listing
+* [x] Directory listing
 * [ ] Command execution
 
 ### Safety
@@ -187,7 +187,7 @@ Focus on **AI capabilities, structured outputs, and tool integration**:
 
 * [ ] **Enforce Structured JSON Outputs**: Add schema validation support to [askGemini](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/agent/aiModels/gemini.ts#L10) using Gemini's native `responseSchema` and `responseMimeType`.
 * [ ] **Define the Tool Interface & Registry**: Create a system for defining local tools (e.g., `readFile`, `writeFile`, `executeCommand`) that Gemini can invoke.
-* [ ] **Register Tools with Gemini**: Update [askGemini](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/agent/aiModels/gemini.ts#L10) to declare tools using native function calling (`functionDeclarations`).
+* [x] **Register Tools with Gemini**: Update [askGemini](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/agent/aiModels/gemini.ts#L10) to declare tools using native function calling (`functionDeclarations`).
 * [ ] **Execute Agent Loop (Planner-Executor-Critic)**: Create the core orchestrator loop (e.g., in `src/agent/loop.ts`) to manage goals, break them down into tasks, run them, and verify success.
 * [ ] **Add Human-in-the-Loop Safety Gates**: Implement interactive approval prompts (`y/n`) in the TUI input loop before the agent runs modifying tools or terminal commands.
 
@@ -219,9 +219,9 @@ Focus on **AI capabilities, structured outputs, and tool integration**:
 
 ## What to Do Next
 
-Now that your TUI foundation and Gemini API integrations are complete and fully functional, here are the next priority steps to build the AI Harness:
+Now that the TUI foundation, basic tools registry, function calling flow, and Gemini API integrations are complete and fully functional, here are the next priority steps to build the AI Harness:
 
 1. **Implement JSON Schema Support**: Add schema validation to the Gemini REST API calls in [gemini.ts](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/agent/aiModels/gemini.ts) so you can get guaranteed parseable JSON arrays for task lists.
-2. **Implement Local Tools**: Write helper functions for file operations and command execution in a new tools file, describing their arguments with JSON schemas.
-3. **Handle Function Call Actions**: Add a function execution handler in [main.ts](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/main.ts) that executes local code when Gemini returns a `functionCall` and feeds the result back to the model.
-4. **Coordinate the Agent Loop**: Wire the planner and tools together using a simple CLI agent loop that logs each step directly to the screen history.
+2. **Implement Write/Execution Tools**: Write helper functions for file writing and command execution, describing their arguments with JSON schemas and registering them in [index.ts](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/tools/index.ts).
+3. **Add Human-in-the-Loop Approval Gate**: Add prompt logic inside the agent execution loop or TUI to require user approval (e.g., `y/n`) before running modifying tools (like file write or terminal commands).
+4. **Coordinate the Orchestrated Agent Loop**: Build the full Planner-Executor-Critic loop (e.g., in `src/agent/loop.ts`) to break goals down into structured tasks, execute them with tools, verify outcomes, and handle retries.
