@@ -1,227 +1,126 @@
-# AI Harness TODO
+# AI Harness
 
-## Phase 1: Terminal Foundation
+[![TypeScript](https://img.shields.io/badge/Language-TypeScript-blue.svg)](https://www.typescriptlang.org/)
+[![Node.js](https://img.shields.io/badge/Runtime-Node.js%20v18+-green.svg)](https://nodejs.org/)
+[![Gemini](https://img.shields.io/badge/Powered%20By-Google%20Gemini-orange.svg)](https://ai.google.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-### Terminal Setup
+AI Harness is an interactive terminal chat client and developer agent orchestrator powered by Google Gemini. It intercepts raw keystrokes to present a custom, framework-free TUI console, and integrates filesystem tools that the model calls autonomously to inspect local directory files. The application is built from scratch in TypeScript and runs on Node.js without relying on heavy external TUI libraries.
 
-* [x] Enable terminal raw mode
-* [x] Detect terminal width and height
-* [x] Handle Ctrl+C gracefully
-* [x] Create basic terminal class
-* [x] Create central application state
-* [x] Handle terminal resize events
-
-### Rendering System
-
-* [x] Create header section
-* [x] Create input section
-* [x] Create box rendering system
-* [x] Create border style system
-* [x] Create padding system
-* [x] Create message history section
-* [x] Render entire screen from state
-* [x] Clear and redraw screen correctly
-* [x] Prevent visual flickering
-* [x] Create screen buffer
-
-### Input System
-
-* [x] Capture keyboard input
-* [x] Display typed characters
-* [x] Handle Backspace
-* [x] Handle Enter
-* [x] Handle Arrow Keys
-* [ ] Command history
-* [ ] Multi-line editing
-
-### Text Processing
-
-* [x] Split text by length
-* [x] Split text by words
-* [x] Text alignment (center/left)
-* [x] Text wrapping for chat messages
-* [x] Markdown-aware wrapping
-
-### Message History
-
-* [x] Store user messages
-* [x] Display message history
-* [x] Support scrolling
-* [x] Keep input box fixed at bottom
+*A framework-free terminal AI chat client and agent orchestrator powered by Google Gemini.*
 
 ---
 
-## Phase 2: Gemini Integration
+## Demo
 
-### API Layer
-
-* [x] Move Gemini code into its own file
-* [x] Create Gemini client/API function
-* [x] Send user prompts
-* [x] Receive model responses
-* [x] Handle API errors
-* [x] Display loading state
-
-### Chat Flow
-
-* [x] Enter submits message
-* [x] User message appears instantly
-* [x] Gemini response appears after request
-* [x] Save conversation history
-* [x] Send previous messages as context
+- **Main UI View**: `![Main Interface View](docs/assets/main_view.png)`
+- **Interactive Session**: `![Interactive Session](docs/assets/demo.gif)`
 
 ---
 
-## Phase 3: Rendering Engine
+## Features
 
-### Screen Buffer
-
-* [ ] Create frame buffer
-* [ ] Draw widgets into buffer
-* [ ] Render buffer to terminal
-* [ ] Layer multiple widgets
-* [ ] Support widget positioning
-
-### Rendering Optimization
-
-* [ ] Compare previous frame to current frame
-* [ ] Diff rendering
-* [ ] Render only changed lines
-* [ ] Eliminate flickering
+| Feature | Description | Why It Matters |
+| :--- | :--- | :--- |
+| **Framework-Free TUI** | Built from scratch using native Node.js stdout streams and raw ANSI escape sequences. | Bypasses the resource and layout overhead of heavy terminal libraries like Blessed. |
+| **Raw Stdin Key Interceptor** | Captures keyboard signals character-by-character directly from raw TTY input. | Enables real-time backspacing, custom Ctrl+C exit handling, and history scrolling. |
+| **Double-Buffered Renderer** | Compiles the full terminal viewport structure in an in-memory buffer before printing. | Eliminates console screen tearing and redraw flicker during fast typing. |
+| **Autonomous Agent Loop** | Coordinates multi-step conversation histories and routes Google Gemini API tool calls. | Resolves and executes filesystem tools locally in a closed loop. |
+| **Console Markdown Engine** | Integrates Markdown parsing and terminal formatting to style responses and code blocks. | Ensures model responses remain readable and structured in the console. |
 
 ---
 
-## Phase 4: Widget System
+## Tech Stack
 
-### Core Widgets
-
-* [x] Box widget
-* [ ] Header widget
-* [x] Input widget
-* [ ] Chat widget
-* [ ] Scroll view widget
-
-### Layout
-
-* [ ] Vertical layouts
-* [ ] Horizontal layouts
-* [ ] Automatic sizing
-* [ ] Responsive resizing
+- **TypeScript**: Chosen for strict compile-time type safety across API payloads, terminal dimension budgets, and box layout properties.
+- **Node.js**: Serves as the runtime, leveraging native TTY and file system modules to achieve low-level terminal interaction with minimal overhead.
+- **Axios**: Used to directly call the Google Gemini REST API, avoiding the dependency footprint of the official SDK while giving precise control over request timeouts and schemas.
+- **Marked & marked-terminal**: Converts rich Markdown formatting from the model's response into clean, styled ANSI terminal output.
+- **Chalk**: Provides colors and text emphasis throughout the terminal views.
 
 ---
 
-## Phase 5: AI Harness Core
+## Architecture
 
-### Task System
+AI Harness follows an event-driven, unidirectional flow. Keypress events trigger callback updates that modify the application's central state. The state engine then calculates the terminal layout budget, constructs an in-memory frame buffer, and flushes it to stdout.
 
-* [ ] Create task structure
-* [ ] Create todo list structure
-* [ ] Parse model output into tasks
-* [ ] Display active task
+Visual layout budgeting splits the screen into three zones: a fixed header, a scrollable conversation log, and a bottom-aligned input box. The rendering engine dynamically computes the vertical height of each region on every resize or redraw event, ensuring no text overflows the visible terminal boundary.
 
-### Agent Loop
-
-* [ ] User gives goal
-* [ ] Model creates plan
-* [ ] Model selects next task
-* [ ] Model executes task
-* [ ] Model reviews result
-* [ ] Repeat until complete
-
-### Critic System
-
-* [ ] Create critic prompt
-* [ ] Review model outputs
-* [ ] Detect mistakes
-* [ ] Request corrections
-* [ ] Retry failed steps
+When a user submits a prompt, the system initiates an asynchronous execution loop. If the model returns a tool call (such as requesting a directory list or file contents), the agent runner executes the matching local system tool, appends the output to the message history, and submits it back to Gemini. The loop repeats until the model yields a final text response.
 
 ---
 
-## Phase 6: Tool Calling
+## Project Structure
 
-### Tool Framework
-
-* [x] Define tool interface
-* [x] Register tools
-* [x] Execute tool calls
-* [x] Return tool results to model
-
-### Basic Tools
-
-* [x] File reader
-* [ ] File writer
-* [x] Directory listing
-* [ ] Command execution
-
-### Safety
-
-* [ ] Confirm dangerous commands
-* [ ] Restrict file access
-* [ ] Handle tool errors
+```text
+src/
+├── agent/       # Coordinates the model REST requests and the tool-calling loop.
+├── input/       # Intercepts raw TTY keypress streams and runs callback mappings.
+├── tools/       # Implementation and schemas of agent-accessible system tools.
+├── tui/         # Frame compositor, layout widgets, and console screen manager.
+├── types/       # TypeScript type declarations for layouts, messages, and API structures.
+└── utils/       # Helpers for ANSI escape codes, text word wrapping, and loading spinners.
+```
 
 ---
 
-## Phase 7: Polish
+## Installation
 
-### User Experience
+### Prerequisites
 
-* [ ] Session saving
-* [ ] Configuration file
-* [ ] Themes
-* [ ] Better layouts
+- Node.js (v18.0.0 or higher)
+- Package manager (`pnpm` recommended, or `npm`/`yarn`)
 
-### Advanced Features
+### Environment Variables
 
-* [ ] Multiple models
-* [ ] Local models
-* [ ] Memory system
-* [ ] Cost tracking
-* [ ] Plugin system
+Configure a `.env` file at the project root:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key
+geminiModel=gemini-2.5-flash
+minTUIScreenHeight=20
+minTUIScreenWidth=40
+```
+
+### Installation Commands
+
+```bash
+pnpm install
+```
+
+### Run Commands
+
+```bash
+pnpm build
+pnpm start
+```
 
 ---
 
-# Current Goal
+## Interesting Implementation Details
 
-Focus on **AI capabilities, structured outputs, and tool integration**:
-
-* [ ] **Enforce Structured JSON Outputs**: Add schema validation support to [askGemini](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/agent/aiModels/gemini.ts#L10) using Gemini's native `responseSchema` and `responseMimeType`.
-* [ ] **Define the Tool Interface & Registry**: Create a system for defining local tools (e.g., `readFile`, `writeFile`, `executeCommand`) that Gemini can invoke.
-* [x] **Register Tools with Gemini**: Update [askGemini](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/agent/aiModels/gemini.ts#L10) to declare tools using native function calling (`functionDeclarations`).
-* [ ] **Execute Agent Loop (Planner-Executor-Critic)**: Create the core orchestrator loop (e.g., in `src/agent/loop.ts`) to manage goals, break them down into tasks, run them, and verify success.
-* [ ] **Add Human-in-the-Loop Safety Gates**: Implement interactive approval prompts (`y/n`) in the TUI input loop before the agent runs modifying tools or terminal commands.
+- **In-Memory Frame Double-Buffering**: To prevent screen tearing and terminal flickering on every keystroke, the visual layout is fully assembled in an in-memory string buffer. By combining ANSI clear codes, border drawings, wrapped content, and layout coordinates into a single payload, the engine updates the screen with a single, atomic `process.stdout.write` call.
+- **Dynamic Viewport Height Budgeting**: Since console dimensions are dynamic, the TUI computes the history scroll area's budget on the fly: $Height = ScreenHeight - HeaderHeight - InputBoxHeight - SpinnerHeight - Offset$. If the conversation log exceeds this calculated limit, a slice of the history is rendered based on a viewport scroll offset, allowing independent history navigation while keeping the input box locked to the bottom.
+- **Raw TTY Keystroke Mapping**: By invoking `process.stdin.setRawMode(true)`, the program bypasses standard "cooked" operating system buffering that waits for carriage returns. This allows the custom keypress listener to capture raw control sequences (such as arrow keys for scrolling and backspace for instant text manipulation) and refresh the interface immediately.
+- **Direct REST Agent Loop**: Instead of incorporating the official Google Gen AI SDK, the project communicates directly with Gemini using HTTP requests via Axios. This minimizes the package dependency footprint and provides direct access to candidate fields, thought signatures, and tool-call payloads within the beta REST endpoints.
 
 ---
 
-## How to Build and Run (using pnpm)
+## Future Improvements
 
-1. **Install Dependencies**:
-   ```bash
-   pnpm install
-   ```
+- **Workspace Path Validation**: Add strict path resolution and validation checks to prevent directory traversal and restrict tool execution to the active workspace.
+- **Interactive Cursor Navigation**: Implement horizontal cursor movement within the input box to allow editing text in the middle of sentences instead of only backspacing from the end.
+- **Persistent Chat History**: Add local session serialization to save conversation histories as JSON on disk and load them on startup.
+- **Console Shell Execution Tool**: Introduce a sandboxed execution tool that allows the model to run host commands (e.g. compilers or test runners) after explicit user confirmation.
 
-2. **Configure Environment Variables**:
-   Copy the environment template and fill in your `GEMINI_API_KEY`:
-   ```bash
-   cp .env.example .env
-   ```
+---
 
-3. **Build/Compile the TypeScript code**:
-   ```bash
-   pnpm build
-   ```
+## Contributing
 
-4. **Run the Application**:
-   ```bash
-   pnpm start
-   ```
+Contributions are welcome. Please ensure that all changes compile successfully without strict TypeScript type errors (`pnpm build`). When implementing new tools, add the implementation in `src/tools/`, define the tool schema in `src/tools/index.ts`, and update the execution routes inside `src/agent/agent.ts`.
 
+---
 
-## What to Do Next
+## License
 
-Now that the TUI foundation, basic tools registry, function calling flow, and Gemini API integrations are complete and fully functional, here are the next priority steps to build the AI Harness:
-
-1. **Implement JSON Schema Support**: Add schema validation to the Gemini REST API calls in [gemini.ts](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/agent/aiModels/gemini.ts) so you can get guaranteed parseable JSON arrays for task lists.
-2. **Implement Write/Execution Tools**: Write helper functions for file writing and command execution, describing their arguments with JSON schemas and registering them in [index.ts](file:///home/alterwill/Github/100xDevs/terminalAiChat/src/tools/index.ts).
-3. **Add Human-in-the-Loop Approval Gate**: Add prompt logic inside the agent execution loop or TUI to require user approval (e.g., `y/n`) before running modifying tools (like file write or terminal commands).
-4. **Coordinate the Orchestrated Agent Loop**: Build the full Planner-Executor-Critic loop (e.g., in `src/agent/loop.ts`) to break goals down into structured tasks, execute them with tools, verify outcomes, and handle retries.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
