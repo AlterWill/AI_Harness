@@ -53,18 +53,19 @@ export default class Terminal {
 
   display(): void {
     let frame = ""
-    frame += ANSI.CLEAR_SCREEN;
+    // Jump to top-left then erase to end of screen — no blank flash between frames
     frame += ANSI.TOP_LEFT_POSISTION;
-    // 1. Position and render header
+    frame += ANSI.ERASE_DOWN;
+    // render header
     const headerContent = this.buffer[0] ?? "";
     frame += headerContent
 
-    // 2. Position and render conversation history
+    // render conversation history
     const historyContent = this.buffer[1] ?? "";
     const renderedHistory = renderMarkdown(historyContent, this.screen.width - 4).trimEnd();
     const historyLines = renderedHistory === "" ? [] : renderedHistory.split("\n");
 
-    // Calculate dynamic available height to prevent scrolling overflow
+    // fit all in terminal height
     const inputBox = this.createInputBox();
     const inputBoxHeight = inputBox.height;
     const extraSpaceForExitMessage = this.displayExitMessageForCtrlC ? 2 : 0;
@@ -80,7 +81,8 @@ export default class Terminal {
     // Slice only the lines that fit on screen
     const linesToPrint = historyLines.slice(startIndex, endIndex)
 
-    const printableHistory = linesToPrint.join("\n");
+    const sideMargin = "  "; // 2 spaces left margin to align text with header/input box content
+    const printableHistory = linesToPrint.map(line => sideMargin + line).join("\n");
 
     // Draw history starting at Row 4
     frame += ANSI.cursorTo(4, 1)
@@ -89,7 +91,7 @@ export default class Terminal {
     }
 
     if (this.buffer[4] !== "") {
-      frame += (historyLines.length > 0 ? "\n\n" : "") + this.buffer[4] + "\n";
+      frame += (historyLines.length > 0 ? "\n\n" : "") + sideMargin + this.buffer[4] + "\n";
     }
 
     // 3. Position and render input box

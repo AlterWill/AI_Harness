@@ -10,8 +10,9 @@ import setupKeyboard from "./input/keyboard.js";
 import { ANSI } from "./utils/escapeSequences.js";
 import type { model } from "./agent/aiModels/gemini.js";
 import Spinner from "./utils/spinner.js";
-import agentLoop from "./agent/agent.js";
+import agentLoop, { SYSTEM_MESSAGE, SYSTEM_ACK } from "./agent/agent.js";
 import { tools } from "./tools/index.js";
+import { formatHistory } from "./utils/formatHistory.js";
 
 console.clear();
 terminalRawMode();
@@ -20,7 +21,7 @@ const minTUIScreenHeight = parseInt(process.env.minTUIScreenHeight ?? "20")
 const minTUIScreenWidth = parseInt(process.env.minTUIScreenWidth ?? "40")
 const geminiModel: model = (process.env.geminiModel || "gemini-2.5-flash") as model
 
-const history: message[] = [];
+const history: message[] = [SYSTEM_MESSAGE, SYSTEM_ACK];
 
 const main = new Terminal();
 
@@ -33,7 +34,6 @@ setupKeyboard({
 
   onBackspace(): void {
     main.inputBoxText = main.inputBoxText.slice(0, -1)
-    console.clear()
     main.inputBox()
     main.display()
     return;
@@ -64,14 +64,12 @@ setupKeyboard({
 
   onUp(): void {
     main.scrollOffset++;
-    console.clear()
     main.inputBox()
     main.display()
   },
 
   onDown(): void {
     main.scrollOffset = Math.max(0, main.scrollOffset - 1)
-    console.clear()
     main.inputBox()
     main.display()
   },
@@ -89,10 +87,10 @@ setupKeyboard({
       text: text
     }
 
+    let currentStatus = "Thinking";
     const loadingAnimation = new Spinner()
     loadingAnimation.onTick = (frame: string) => {
-      main.buffer[4] = `${frame} Thinking`
-      console.clear()
+      main.buffer[4] = `${frame} ${currentStatus}`
       main.inputBox()
       main.display()
     }
@@ -100,25 +98,25 @@ setupKeyboard({
 
     history.push(prompt)
 
-    main.conversationHistoryText = history
-      .map(msg => {
-        const text = msg.text || (msg.parts?.find(p => typeof p === 'object' && 'text' in p) as any)?.text;
-        if (!text) return null;
-        return `${msg.role === "user" ? "\nYou\n\n" : "\nAI\n\n"}${text}`;
-      })
-      .filter(Boolean)
-      .join('\n')
-
+    main.conversationHistoryText = formatHistory(history)
     main.buffer[1] = main.conversationHistoryText
 
-    console.clear()
     main.inputBox()
     main.display()
 
     try {
-      await agentLoop({
-        model: geminiModel
-      }, history, tools)
+      await agentLoop(
+        { model: geminiModel },
+        history,
+        tools,
+        (status?: string) => {
+          currentStatus = status || "Thinking";
+          main.conversationHistoryText = formatHistory(history);
+          main.buffer[1] = main.conversationHistoryText;
+          main.inputBox();
+          main.display();
+        }
+      )
     } catch (err) {
       if (axios.isAxiosError(err)) {
         if (err.response?.status === 429) {
@@ -136,17 +134,9 @@ setupKeyboard({
       main.buffer[4] = ""
     }
 
-    main.conversationHistoryText = history
-      .map(msg => {
-        const text = msg.text || (msg.parts?.find(p => typeof p === 'object' && 'text' in p) as any)?.text;
-        if (!text) return null;
-        return `${msg.role === "user" ? "\nYou\n\n" : "\nAI\n\n"}${text}`;
-      })
-      .filter(Boolean)
-      .join('\n')
+    main.conversationHistoryText = formatHistory(history)
     main.buffer[1] = main.conversationHistoryText
 
-    console.clear()
     main.inputBox()
     main.display()
   }
@@ -156,7 +146,6 @@ function show(): void {
   console.clear()
   let errorMessage = "This TUI needs more than " + minTUIScreenHeight + " height and " + minTUIScreenWidth + " width at least"
   if (main.screen.height < minTUIScreenHeight || main.screen.width < minTUIScreenWidth) {
-    console.clear()
     console.log(errorMessage)
     process.stdout.write(ANSI.CURSOR_HIDE)
   } else {

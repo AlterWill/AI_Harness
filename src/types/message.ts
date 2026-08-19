@@ -7,6 +7,7 @@ export type message = {
   role: "system" | "user" | "model" | "function";
   text?: string;
   parts?: MessagePart[];
+  hidden?: boolean; // if true, never shown in the conversation UI
 };
 
 

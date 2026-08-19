@@ -32,7 +32,8 @@ type askGeminiWithToolsReturnType = {
   name: string,
   args: any,
   id?: string,
-  thoughtSignature?: string
+  thoughtSignature?: string,
+  rawParts?: any[]
 } | {
   type: "text",
   text: string
@@ -65,21 +66,35 @@ export async function askGeminiWithTools(model: aiModel, prompt: message[], tool
     timeout: 30000 // time limit for model processing
   });
 
-  const part = response.data.candidates[0].content.parts[0]
+  const parts: any[] = response.data.candidates[0].content.parts ?? [];
 
-  if (part.functionCall) {
-    return {
-      type: "tool_call",
-      name: part.functionCall.name,
-      args: part.functionCall.args,
-      id: part.functionCall.id,
-      thoughtSignature: part.thoughtSignature
-    };
+  // Gemini can return multiple parts in one response, e.g. a text explanation
+  // followed by a functionCall. Scan all parts so we never miss a tool call.
+  let textAccumulator = "";
+  let thoughtSignature: string | undefined;
+
+  for (const part of parts) {
+    if (part.thoughtSignature) {
+      thoughtSignature = part.thoughtSignature;
+    }
+    if (part.functionCall) {
+      return {
+        type: "tool_call",
+        name: part.functionCall.name,
+        args: part.functionCall.args,
+        id: part.functionCall.id,
+        rawParts: parts,
+        ...(thoughtSignature !== undefined ? { thoughtSignature } : {})
+      };
+    }
+    if (part.text) {
+      textAccumulator += part.text;
+    }
   }
 
   return {
     type: "text",
-    text: part.text || ""
+    text: textAccumulator
   }
 }
 

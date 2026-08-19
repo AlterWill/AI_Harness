@@ -18,5 +18,6 @@ export type message = {
     role: "system" | "user" | "model" | "function";
     text?: string;
     parts?: MessagePart[];
+    hidden?: boolean;
 };
 //# sourceMappingURL=message.d.ts.map

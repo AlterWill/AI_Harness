@@ -41,4 +41,5 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
   },
+  "exclude": ["src/chess-cli/**/*", "test/**/*", "dist", "node_modules"]
 }
